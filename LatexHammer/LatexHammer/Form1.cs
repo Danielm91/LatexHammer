@@ -11,9 +11,26 @@ using System.IO;
 
 namespace LatexHammer
 {
-   
+    
     public partial class Form1 : Form
     {
+        #region "Entry Assists"
+        public int myParseInt(string input)
+        {
+            int result = 0;
+            try
+            {
+                result = int.Parse(input);
+            }
+            catch
+            {
+                result = 0;
+            }
+            return result;
+        }
+
+        #endregion
+
         public const int MODEL_TYPE_INFANTRY = 0;
         public const int MODEL_TYPE_JUMP_INFANTRY = 1;
         public const int MODEL_TYPE_JET_PACK_INFANTRY = 2;
@@ -50,18 +67,29 @@ namespace LatexHammer
             public int si;
             public int re;
             public int hp;
+
+            public int defaultPoints;
+            public int defaultQuantity;
+
+            public List<string> defaultWargear;
+            public List<string> defaultSpecial;
         }
 
         public struct wargear
         {
             public string name;
             public string description;
+
+            public int defaultPoints;
+            public int defaultQuantity;
         }
 
         public struct special
         {
             public string name;
             public string description;
+
+            public int defaultPoints;
         }
 
         public Form1()
@@ -76,7 +104,11 @@ namespace LatexHammer
             currentRuleSet.masterWargearList = new List<wargear> { };
             currentRuleSet.masterSpecialList = new List<special> { };
 
+            currentRuleSet.masterModelKeyDictionary = new Dictionary<string, int> { };
+            currentRuleSet.masterSpecialKeyDictionary = new Dictionary<string, int> { };
+            currentRuleSet.masterWargearKeyDictionary = new Dictionary<string, int> { };
             currentArmyList.listOfDetachments = new List<detachment> { };
+
     }
 
         public struct ruleSet
@@ -84,6 +116,10 @@ namespace LatexHammer
             public List<model> masterModelList;
             public List<wargear> masterWargearList;
             public List<special> masterSpecialList;
+
+            public Dictionary<string, int> masterModelKeyDictionary;
+            public Dictionary<string, int> masterWargearKeyDictionary;
+            public Dictionary<string, int> masterSpecialKeyDictionary;
         }
 
         public ruleSet currentRuleSet;
@@ -106,71 +142,109 @@ namespace LatexHammer
             for (int index = 0; index < currentRuleSet.masterWargearList.Count; index++)
             {
                 lbWargear.Items.Add(currentRuleSet.masterWargearList[index].name);
+                cbModelDefaultWargearType.Items.Add(currentRuleSet.masterWargearList[index].name);
                 cbUnitWargearType.Items.Add(currentRuleSet.masterWargearList[index].name);
             }
 
             for (int index = 0; index < currentRuleSet.masterSpecialList.Count; index++)
             {
                 lbSpecialRules.Items.Add(currentRuleSet.masterSpecialList[index].name);
+                cbModelDefaultSpecialType.Items.Add(currentRuleSet.masterSpecialList[index].name);
                 cbUnitSpecialType.Items.Add(currentRuleSet.masterSpecialList[index].name);
+                cbDetachmentSpecials.Items.Add(currentRuleSet.masterSpecialList[index].name);
             }
         }
 
         private void btnModelAdd_Click(object sender, EventArgs e)
         {
+            addModel();
+        }
+
+        public void addModel()
+        {
             model newModel;
             newModel.name = txtModelName.Text;
             newModel.type = cbModelType.SelectedIndex;
-            newModel.ws = int.Parse(txtModelWS.Text);
-            newModel.bs = int.Parse(txtModelBs.Text);
-            newModel.s = int.Parse(txtModelS.Text);
-            newModel.t = int.Parse(txtModelT.Text);
-            newModel.w = int.Parse(txtModelW.Text);
-            newModel.i = int.Parse(txtModelI.Text);
-            newModel.a = int.Parse(txtModelA.Text);
-            newModel.ld = int.Parse(txtModelLd.Text);
-            newModel.sv = int.Parse(txtModelSave.Text);
-            newModel.inv = int.Parse(txtModelInv.Text);
-            newModel.fr = int.Parse(txtModelFr.Text);
-            newModel.si = int.Parse(txtModelSi.Text);
-            newModel.re = int.Parse(txtModelRe.Text);
-            newModel.hp = int.Parse(txtModelHp.Text);
+            newModel.ws = myParseInt(txtModelWS.Text);
+            newModel.bs = myParseInt(txtModelBs.Text);
+            newModel.s = myParseInt(txtModelS.Text);
+            newModel.t = myParseInt(txtModelT.Text);
+            newModel.w = myParseInt(txtModelW.Text);
+            newModel.i = myParseInt(txtModelI.Text);
+            newModel.a = myParseInt(txtModelA.Text);
+            newModel.ld = myParseInt(txtModelLd.Text);
+            newModel.sv = myParseInt(txtModelSave.Text);
+            newModel.inv = myParseInt(txtModelInv.Text);
+            newModel.fr = myParseInt(txtModelFr.Text);
+            newModel.si = myParseInt(txtModelSi.Text);
+            newModel.re = myParseInt(txtModelRe.Text);
+            newModel.hp = myParseInt(txtModelHp.Text);
+            newModel.defaultPoints = myParseInt(txtModelDefaultPts.Text);
+            newModel.defaultQuantity = myParseInt(txtModelDefaultQty.Text);
+            newModel.defaultWargear = new List<string> { };
+            newModel.defaultSpecial = new List<string> { };
+
+            currentRuleSet.masterModelList.Add(newModel);
+            currentRuleSet.masterModelKeyDictionary.Add(newModel.name, currentRuleSet.masterModelList.Count - 1);
+
             lbModels.Items.Add(newModel.name);
             cbUnitModelType.Items.Add(newModel.name);
-            currentRuleSet.masterModelList.Add(newModel);
+            lbModels.SelectedIndex = lbModels.Items.Count - 1;
+
+            lbModelDefaultWargear.Items.Clear();
+            lbModelDefaultSpecials.Items.Clear();
         }
 
         private void txtModelSave_Click(object sender, EventArgs e)
         {
+            saveModel();
+        }
+
+        public void saveModel()
+        {
             if (lbModels.SelectedIndex >= 0)
             {
                 model newModel;
-                newModel.name = txtModelName.Text;
+                newModel.name = currentRuleSet.masterModelList[lbModels.SelectedIndex].name;
                 newModel.type = cbModelType.SelectedIndex;
-                newModel.ws = int.Parse(txtModelWS.Text);
-                newModel.bs = int.Parse(txtModelBs.Text);
-                newModel.s = int.Parse(txtModelS.Text);
-                newModel.t = int.Parse(txtModelT.Text);
-                newModel.w = int.Parse(txtModelW.Text);
-                newModel.i = int.Parse(txtModelI.Text);
-                newModel.a = int.Parse(txtModelA.Text);
-                newModel.ld = int.Parse(txtModelLd.Text);
-                newModel.sv = int.Parse(txtModelSave.Text);
-                newModel.inv = int.Parse(txtModelInv.Text);
-                newModel.fr = int.Parse(txtModelFr.Text);
-                newModel.si = int.Parse(txtModelSi.Text);
-                newModel.re = int.Parse(txtModelRe.Text);
-                newModel.hp = int.Parse(txtModelHp.Text);
-                lbModels.Items[lbModels.SelectedIndex] =newModel.name;
-                cbUnitModelType.Items[lbModels.SelectedIndex] = newModel.name;
+                newModel.ws = myParseInt(txtModelWS.Text);
+                newModel.bs = myParseInt(txtModelBs.Text);
+                newModel.s = myParseInt(txtModelS.Text);
+                newModel.t = myParseInt(txtModelT.Text);
+                newModel.w = myParseInt(txtModelW.Text);
+                newModel.i = myParseInt(txtModelI.Text);
+                newModel.a = myParseInt(txtModelA.Text);
+                newModel.ld = myParseInt(txtModelLd.Text);
+                newModel.sv = myParseInt(txtModelSave.Text);
+                newModel.inv = myParseInt(txtModelInv.Text);
+                newModel.fr = myParseInt(txtModelFr.Text);
+                newModel.si = myParseInt(txtModelSi.Text);
+                newModel.re = myParseInt(txtModelRe.Text);
+                newModel.hp = myParseInt(txtModelHp.Text);
+                newModel.defaultPoints = myParseInt(txtModelDefaultPts.Text);
+                newModel.defaultQuantity = myParseInt(txtModelDefaultQty.Text);
+                newModel.defaultWargear = new List<string> { };
+                newModel.defaultSpecial = new List<string> { };
+
                 currentRuleSet.masterModelList[lbModels.SelectedIndex] = newModel;
             }
         }
 
         private void btnModelRemove_Click(object sender, EventArgs e)
         {
+            removeModel();
+        }
+
+        public void removeModel()
+        {
             if (lbModels.SelectedIndex >= 0)
             {
+                currentRuleSet.masterModelKeyDictionary.Remove(currentRuleSet.masterModelList[lbModels.SelectedIndex].name);
+                for (int index = lbModels.SelectedIndex + 1; index < currentRuleSet.masterModelList.Count; index++)
+                {
+                    currentRuleSet.masterModelKeyDictionary.Remove(currentRuleSet.masterModelList[index].name);
+                    currentRuleSet.masterModelKeyDictionary.Add(currentRuleSet.masterModelList[index].name, index - 1);
+                }
                 currentRuleSet.masterModelList.RemoveAt(lbModels.SelectedIndex);
                 cbUnitModelType.Items.RemoveAt(lbModels.SelectedIndex);
                 lbModels.Items.RemoveAt(lbModels.SelectedIndex);
@@ -197,41 +271,87 @@ namespace LatexHammer
                 txtModelSi.Text = currentRuleSet.masterModelList[lbModels.SelectedIndex].si.ToString();
                 txtModelRe.Text = currentRuleSet.masterModelList[lbModels.SelectedIndex].re.ToString();
                 txtModelHp.Text = currentRuleSet.masterModelList[lbModels.SelectedIndex].hp.ToString();
+
+                txtModelDefaultPts.Text = currentRuleSet.masterModelList[lbModels.SelectedIndex].defaultPoints.ToString();
+                txtModelDefaultQty.Text = currentRuleSet.masterModelList[lbModels.SelectedIndex].defaultQuantity.ToString();
+
+                lbModelDefaultWargear.Items.Clear();
+                lbModelDefaultSpecials.Items.Clear();
+
+                for(int index = 0; index < currentRuleSet.masterModelList[lbModels.SelectedIndex].defaultWargear.Count; index ++)
+                {
+                    lbModelDefaultWargear.Items.Add(currentRuleSet.masterModelList[lbModels.SelectedIndex].defaultWargear[index]);
+                }
+
+                for (int index = 0; index < currentRuleSet.masterModelList[lbModels.SelectedIndex].defaultSpecial.Count; index++)
+                {
+                    lbModelDefaultSpecials.Items.Add(currentRuleSet.masterModelList[lbModels.SelectedIndex].defaultSpecial[index]);
+                }
             }
         }
 
         private void btnWargearAdd_Click(object sender, EventArgs e)
         {
-            wargear newWargear;
-            newWargear.name = txtWargearName.Text;
-            newWargear.description = txtWargearDescription.Text;
-            lbWargear.Items.Add(newWargear.name);
-            cbUnitWargearType.Items.Add(newWargear.name);
-            currentRuleSet.masterWargearList.Add(newWargear);       
+            addWargear();
         }
 
-        private void btnWargearSave_Click(object sender, EventArgs e)
+        public void addWargear()
         {
-            if (lbWargear.SelectedIndex >= 0)
+            if (currentRuleSet.masterModelKeyDictionary.ContainsKey(txtWargearName.Text) == false)
             {
                 wargear newWargear;
                 newWargear.name = txtWargearName.Text;
                 newWargear.description = txtWargearDescription.Text;
-                lbWargear.Items[lbWargear.SelectedIndex] = newWargear.name;
-                cbUnitWargearType.Items[lbWargear.SelectedIndex] = newWargear.name;
+                newWargear.defaultPoints = myParseInt(txtWargearDefaultPts.Text);
+                newWargear.defaultQuantity = myParseInt(txtWargearDefaultQty.Text);
+
+                currentRuleSet.masterWargearList.Add(newWargear);
+                currentRuleSet.masterWargearKeyDictionary.Add(newWargear.name, currentRuleSet.masterWargearList.Count - 1);
+
+                lbWargear.Items.Add(newWargear.name);
+                cbModelDefaultWargearType.Items.Add(newWargear.name);
+                cbUnitWargearType.Items.Add(newWargear.name);
+            }
+        }
+        private void btnWargearSave_Click(object sender, EventArgs e)
+        {
+            saveWargear();
+        }
+
+        public void saveWargear()
+        {
+            if (lbWargear.SelectedIndex >= 0)
+            {
+                wargear newWargear;
+                newWargear.name = currentRuleSet.masterWargearList[lbWargear.SelectedIndex].name;
+                newWargear.description = txtWargearDescription.Text;
+                newWargear.defaultPoints = myParseInt(txtWargearDefaultPts.Text);
+                newWargear.defaultQuantity = myParseInt(txtWargearDefaultQty.Text);
                 currentRuleSet.masterWargearList[lbWargear.SelectedIndex] = newWargear;
             }
         }
 
         private void btnWargearRemove_Click(object sender, EventArgs e)
         {
+            removeWargear();
+        }
+
+        public void removeWargear()
+        {
             if (lbWargear.SelectedIndex >= 0)
             {
+                currentRuleSet.masterWargearKeyDictionary.Remove(currentRuleSet.masterWargearList[lbWargear.SelectedIndex].name);
+                for (int index = lbWargear.SelectedIndex + 1; index < currentRuleSet.masterWargearList.Count; index++)
+                {
+                    currentRuleSet.masterWargearKeyDictionary.Remove(currentRuleSet.masterWargearList[index].name);
+                    currentRuleSet.masterWargearKeyDictionary.Add(currentRuleSet.masterWargearList[index].name, index - 1);
+                }
                 currentRuleSet.masterWargearList.RemoveAt(lbWargear.SelectedIndex);
                 cbUnitWargearType.Items.RemoveAt(lbWargear.SelectedIndex);
+                cbModelDefaultWargearType.Items.RemoveAt(lbWargear.SelectedIndex);
                 lbWargear.Items.RemoveAt(lbWargear.SelectedIndex);
             }
-    }
+        }
 
         private void lbWargear_SelectedIndexChanged(object sender, EventArgs e)
         {
@@ -239,38 +359,70 @@ namespace LatexHammer
             {
                 txtWargearName.Text = currentRuleSet.masterWargearList[lbWargear.SelectedIndex].name;
                 txtWargearDescription.Text = currentRuleSet.masterWargearList[lbWargear.SelectedIndex].description;
+                txtWargearDefaultPts.Text = currentRuleSet.masterWargearList[lbWargear.SelectedIndex].defaultPoints.ToString();
+                txtWargearDefaultQty.Text = currentRuleSet.masterWargearList[lbWargear.SelectedIndex].defaultQuantity.ToString();
             }
         }
 
         private void btnSpecialAdd_Click(object sender, EventArgs e)
         {
-            special newSpecial;
-            newSpecial.name = txtSpecialRuleName.Text;
-            newSpecial.description = rtbSpecialRulesDescription.Text;
-            currentRuleSet.masterSpecialList.Add(newSpecial);
-            lbSpecialRules.Items.Add(newSpecial.name);
-            cbUnitSpecialType.Items.Add(newSpecial.name);
+            addSpecial();
         }
 
-        private void btnSpecialSave_Click(object sender, EventArgs e)
+        public void addSpecial()
         {
-            if (lbSpecialRules.SelectedIndex >= 0)
+            if (currentRuleSet.masterSpecialKeyDictionary.ContainsKey(txtSpecialRuleName.Text) == false)
             {
                 special newSpecial;
                 newSpecial.name = txtSpecialRuleName.Text;
                 newSpecial.description = rtbSpecialRulesDescription.Text;
+                newSpecial.defaultPoints = myParseInt(txtSpecialDefaultPts.Text);
+
+                currentRuleSet.masterSpecialList.Add(newSpecial);
+                currentRuleSet.masterSpecialKeyDictionary.Add(newSpecial.name, currentRuleSet.masterSpecialList.Count - 1);
+
+                lbSpecialRules.Items.Add(newSpecial.name);
+                cbModelDefaultSpecialType.Items.Add(newSpecial.name);
+                cbUnitSpecialType.Items.Add(newSpecial.name);
+                cbDetachmentSpecials.Items.Add(newSpecial.name);
+            }
+        }
+        private void btnSpecialSave_Click(object sender, EventArgs e)
+        {
+            saveSpecial();
+        }
+
+        public void saveSpecial()
+        {
+            if (lbSpecialRules.SelectedIndex >= 0)
+            {
+                special newSpecial;
+                newSpecial.name = currentRuleSet.masterSpecialList[lbSpecialRules.SelectedIndex].name;
+                newSpecial.description = rtbSpecialRulesDescription.Text;
+                newSpecial.defaultPoints = myParseInt(txtSpecialDefaultPts.Text);
                 currentRuleSet.masterSpecialList[lbSpecialRules.SelectedIndex] = newSpecial;
-                lbSpecialRules.Items[lbSpecialRules.SelectedIndex] = newSpecial.name;
-                cbUnitSpecialType.Items[lbSpecialRules.SelectedIndex] = newSpecial.name;
             }
         }
 
         private void btnSpecialRemove_Click(object sender, EventArgs e)
         {
+            removeSpecial();
+        }
+
+        public void removeSpecial()
+        {
             if (lbSpecialRules.SelectedIndex >= 0)
             {
+                currentRuleSet.masterSpecialKeyDictionary.Remove(currentRuleSet.masterSpecialList[lbSpecialRules.SelectedIndex].name);
+                for (int index = lbSpecialRules.SelectedIndex + 1; index < currentRuleSet.masterSpecialList.Count; index++)
+                {
+                    currentRuleSet.masterSpecialKeyDictionary.Remove(currentRuleSet.masterSpecialList[index].name);
+                    currentRuleSet.masterSpecialKeyDictionary.Add(currentRuleSet.masterSpecialList[index].name, index - 1);
+                }
                 currentRuleSet.masterSpecialList.RemoveAt(lbSpecialRules.SelectedIndex);
                 cbUnitSpecialType.Items.RemoveAt(lbSpecialRules.SelectedIndex);
+                cbDetachmentSpecials.Items.RemoveAt(lbSpecialRules.SelectedIndex);
+                cbModelDefaultSpecialType.Items.RemoveAt(lbSpecialRules.SelectedIndex);
                 lbSpecialRules.Items.RemoveAt(lbSpecialRules.SelectedIndex);
             }
         }
@@ -281,6 +433,7 @@ namespace LatexHammer
             {
                 txtSpecialRuleName.Text = currentRuleSet.masterSpecialList[lbSpecialRules.SelectedIndex].name;
                 rtbSpecialRulesDescription.Text = currentRuleSet.masterSpecialList[lbSpecialRules.SelectedIndex].description;
+                txtSpecialDefaultPts.Text = currentRuleSet.masterSpecialList[lbSpecialRules.SelectedIndex].defaultPoints.ToString();
             }
         }
 
@@ -289,6 +442,7 @@ namespace LatexHammer
         {
             public string name;
             public List<unit> listOfUnits;
+            public List<string> listOfSpecials;
 
         }
 
@@ -307,6 +461,8 @@ namespace LatexHammer
         public struct armyList
         {
             public List<detachment> listOfDetachments;
+            public string name;
+            public string author;
         }
 
         public int calcArmyListPoints(armyList input)
@@ -338,16 +494,28 @@ namespace LatexHammer
         }
         private void btnDetachmentAdd_Click(object sender, EventArgs e)
         {
+            addDetachment();
+        }
+
+        public void addDetachment()
+        {
             detachment newDetachment;
             newDetachment.name = txtDetachmentName.Text;
 
             newDetachment.listOfUnits = new List<unit> { };
+            newDetachment.listOfSpecials = new List<string> { };
 
             currentArmyList.listOfDetachments.Add(newDetachment);
             lbDetachment.Items.Add(newDetachment.name);
+            lbDetachment.SelectedIndex = lbDetachment.Items.Count - 1;
         }
 
         private void btnDetachmentSave_Click(object sender, EventArgs e)
+        {
+            saveDetachment();
+        }
+
+        public void saveDetachment()
         {
             if (lbDetachment.SelectedIndex >= 0)
             {
@@ -360,6 +528,11 @@ namespace LatexHammer
         }
 
         private void btnDetachmentRemove_Click(object sender, EventArgs e)
+        {
+            detachmentRemove();
+        }
+
+        public void detachmentRemove()
         {
             if (lbDetachment.SelectedIndex >= 0)
             {
@@ -375,13 +548,19 @@ namespace LatexHammer
                 txtDetachmentName.Text = currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].name;
 
                 lbUnits.Items.Clear();
+                lbDetachmentSpecials.Items.Clear();
                 lbUnitModels.Items.Clear();
                 lbUnitWargear.Items.Clear();
-                lbUnitSpecials.Items.Clear();
+                lbUnitSpecials.Items.Clear();  
 
                 for (int index = 0; index < currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits.Count; index ++)
                 {
                     lbUnits.Items.Add(currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[index].name);
+                }
+
+                for (int index = 0; index < currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfSpecials.Count; index++)
+                {
+                    lbDetachmentSpecials.Items.Add(currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfSpecials[index]);
                 }
 
                 txtDetachmentPoints.Text = calcDetachmentPoints(currentArmyList.listOfDetachments[lbDetachment.SelectedIndex]).ToString();
@@ -452,6 +631,11 @@ namespace LatexHammer
 
         private void txtUnitAdd_Click(object sender, EventArgs e)
         {
+            addUnit();        
+        }
+
+        public void addUnit()
+        {
             if (lbDetachment.SelectedIndex >= 0)
             {
                 unit newUnit;
@@ -459,17 +643,22 @@ namespace LatexHammer
                 newUnit.role = cbUnitRole.SelectedIndex;
 
                 newUnit.listOfModels = new List<modelAspect> { };
-              
+
                 lbUnits.Items.Add(newUnit.name);
                 currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits.Add(newUnit);
                 lbUnitModels.Items.Clear();
                 lbUnitWargear.Items.Clear();
                 lbUnitSpecials.Items.Clear();
+
+                lbUnits.SelectedIndex = lbUnits.Items.Count - 1;
             }
-            
+        }
+        private void txtUnitSave_Click(object sender, EventArgs e)
+        {
+            saveUnit();
         }
 
-        private void txtUnitSave_Click(object sender, EventArgs e)
+        public void saveUnit()
         {
             if (lbDetachment.SelectedIndex >= 0 & lbUnits.SelectedIndex >= 0)
             {
@@ -481,8 +670,12 @@ namespace LatexHammer
                 currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[lbUnits.SelectedIndex] = bufferUnit;
             }
         }
-
         private void txtUnitRemove_Click(object sender, EventArgs e)
+        {
+            removeUnit();
+        }
+
+        public void removeUnit()
         {
             if (lbDetachment.SelectedIndex >= 0 & lbUnits.SelectedIndex >= 0)
             {
@@ -516,19 +709,43 @@ namespace LatexHammer
 
         private void btnUnitModelAdd_Click(object sender, EventArgs e)
         {
-            if (lbDetachment.SelectedIndex >= 0 & lbUnits.SelectedIndex >=0 & cbUnitModelType.SelectedIndex >= 0)
+            addUnitModel();
+        }
+
+        public void addUnitModel()
+        {
+            if (lbDetachment.SelectedIndex >= 0 & lbUnits.SelectedIndex >= 0 & cbUnitModelType.SelectedIndex >= 0)
             {
                 modelAspect newModel;
-                newModel.type = cbUnitModelType.SelectedIndex;
-                newModel.qty = int.Parse(txtUnitModelQty.Text);
-                newModel.pts = int.Parse(txtUnitModelPts.Text);
+                newModel.type = currentRuleSet.masterModelKeyDictionary[cbUnitModelType.Text];
+                newModel.qty = myParseInt(txtUnitModelQty.Text);
+                newModel.pts = myParseInt(txtUnitModelPts.Text);
                 if (newModel.qty > 0)
                 {
                     newModel.listOfWargear = new List<unitAspect> { };
                     newModel.listOfSpecials = new List<unitAspect> { };
 
+                    for (int index = 0; index < currentRuleSet.masterModelList[currentRuleSet.masterModelKeyDictionary[cbUnitModelType.Text]].defaultWargear.Count; index++)
+                    {
+                        unitAspect newWargear;
+                        newWargear.type = currentRuleSet.masterWargearKeyDictionary[currentRuleSet.masterModelList[currentRuleSet.masterModelKeyDictionary[cbUnitModelType.Text]].defaultWargear[index]];
+                        newWargear.pts = currentRuleSet.masterWargearList[currentRuleSet.masterWargearKeyDictionary[currentRuleSet.masterModelList[currentRuleSet.masterModelKeyDictionary[cbUnitModelType.Text]].defaultWargear[index]]].defaultPoints;
+                        newWargear.qty = currentRuleSet.masterWargearList[currentRuleSet.masterWargearKeyDictionary[currentRuleSet.masterModelList[currentRuleSet.masterModelKeyDictionary[cbUnitModelType.Text]].defaultWargear[index]]].defaultQuantity;
+                        newModel.listOfWargear.Add(newWargear);
+                    }
+
+                    for (int index = 0; index < currentRuleSet.masterModelList[currentRuleSet.masterModelKeyDictionary[cbUnitModelType.Text]].defaultSpecial.Count; index++)
+                    {
+                        unitAspect newSpecial;
+                        newSpecial.type = currentRuleSet.masterSpecialKeyDictionary[currentRuleSet.masterModelList[currentRuleSet.masterModelKeyDictionary[cbUnitModelType.Text]].defaultSpecial[index]];
+                        newSpecial.pts = currentRuleSet.masterSpecialList[currentRuleSet.masterSpecialKeyDictionary[currentRuleSet.masterModelList[currentRuleSet.masterModelKeyDictionary[cbUnitModelType.Text]].defaultSpecial[index]]].defaultPoints;
+                        newSpecial.qty = 0;
+                        newModel.listOfSpecials.Add(newSpecial);
+                    }
+
                     lbUnitModels.Items.Add(cbUnitModelType.Items[cbUnitModelType.SelectedIndex]);
                     currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[lbUnits.SelectedIndex].listOfModels.Add(newModel);
+                    lbUnitModels.SelectedIndex = lbUnitModels.Items.Count - 1;
                 }
 
                 updatePointDisplayOnUnitChange();
@@ -537,12 +754,17 @@ namespace LatexHammer
 
         private void btnUnitModelSave_Click(object sender, EventArgs e)
         {
+            saveUnitModel();
+        }
+
+        public void saveUnitModel()
+        {
             if (lbDetachment.SelectedIndex >= 0 & lbUnits.SelectedIndex >= 0 & cbUnitModelType.SelectedIndex >= 0 & lbUnitModels.SelectedIndex >= 0)
             {
                 modelAspect newModel = currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[lbUnits.SelectedIndex].listOfModels[lbUnitModels.SelectedIndex];
                 newModel.type = cbUnitModelType.SelectedIndex;
-                newModel.qty = int.Parse(txtUnitModelQty.Text);
-                newModel.pts = int.Parse(txtUnitModelPts.Text);
+                newModel.qty = myParseInt(txtUnitModelQty.Text);
+                newModel.pts = myParseInt(txtUnitModelPts.Text);
                 if (newModel.qty > 0)
                 {
                     lbUnitModels.Items[lbUnitModels.SelectedIndex] = cbUnitModelType.Items[cbUnitModelType.SelectedIndex];
@@ -557,12 +779,11 @@ namespace LatexHammer
                 updatePointDisplayOnUnitChange();
             }
         }
-
         private void lbUnitModels_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (lbDetachment.SelectedIndex >= 0 & lbUnits.SelectedIndex >= 0 & lbUnitModels.SelectedIndex >= 0)
             {
-                cbUnitModelType.SelectedIndex = currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[lbUnits.SelectedIndex].listOfModels[lbUnitModels.SelectedIndex].type;
+                cbUnitModelType.Text = currentRuleSet.masterModelList[currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[lbUnits.SelectedIndex].listOfModels[lbUnitModels.SelectedIndex].type].name;
                 txtUnitModelQty.Text = currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[lbUnits.SelectedIndex].listOfModels[lbUnitModels.SelectedIndex].qty.ToString();
                 txtUnitModelPts.Text = currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[lbUnits.SelectedIndex].listOfModels[lbUnitModels.SelectedIndex].pts.ToString();
 
@@ -583,12 +804,17 @@ namespace LatexHammer
 
         private void btnUnitWargearAdd_Click(object sender, EventArgs e)
         {
+            addUnitWargear();
+        }
+
+        public void addUnitWargear()
+        {
             if (lbDetachment.SelectedIndex >= 0 & lbUnits.SelectedIndex >= 0 & lbUnitModels.SelectedIndex >= 0 & cbUnitWargearType.SelectedIndex >= 0)
             {
                 unitAspect newWargear;
                 newWargear.type = cbUnitWargearType.SelectedIndex;
-                newWargear.pts = int.Parse(txtUnitWargearPts.Text);
-                newWargear.qty = int.Parse(txtUnitWargearQty.Text);
+                newWargear.pts = myParseInt(txtUnitWargearPts.Text);
+                newWargear.qty = myParseInt(txtUnitWargearQty.Text);
 
                 if (newWargear.qty > 0)
                 {
@@ -602,12 +828,17 @@ namespace LatexHammer
 
         private void btnUnitWargearSave_Click(object sender, EventArgs e)
         {
+            saveUnitWargear();
+        }
+
+        public void saveUnitWargear()
+        {
             if (lbDetachment.SelectedIndex >= 0 & lbUnits.SelectedIndex >= 0 & lbUnitModels.SelectedIndex >= 0 & cbUnitWargearType.SelectedIndex >= 0 & lbUnitWargear.SelectedIndex >= 0)
             {
                 unitAspect newWargear;
                 newWargear.type = cbUnitWargearType.SelectedIndex;
-                newWargear.pts = int.Parse(txtUnitWargearPts.Text);
-                newWargear.qty = int.Parse(txtUnitWargearQty.Text);
+                newWargear.pts = myParseInt(txtUnitWargearPts.Text);
+                newWargear.qty = myParseInt(txtUnitWargearQty.Text);
 
                 if (newWargear.qty > 0)
                 {
@@ -623,7 +854,6 @@ namespace LatexHammer
                 updatePointDisplayOnUnitChange();
             }
         }
-
         private void lbUnitWargear_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (lbDetachment.SelectedIndex >= 0 & lbUnits.SelectedIndex >= 0 & lbUnitModels.SelectedIndex >= 0 & lbUnitWargear.SelectedIndex >= 0)
@@ -637,11 +867,16 @@ namespace LatexHammer
 
         private void btnUnitSpecialAdd_Click(object sender, EventArgs e)
         {
+            addUnitSpecial();
+        }
+
+        public void addUnitSpecial()
+        {
             if (lbDetachment.SelectedIndex >= 0 & lbUnits.SelectedIndex >= 0 & lbUnitModels.SelectedIndex >= 0 & cbUnitSpecialType.SelectedIndex >= 0)
             {
                 unitAspect newSpecial;
                 newSpecial.type = cbUnitSpecialType.SelectedIndex;
-                newSpecial.pts = int.Parse(txtUnitSpecialPts.Text);
+                newSpecial.pts = myParseInt(txtUnitSpecialPts.Text);
                 newSpecial.qty = 0;
 
                 lbUnitSpecials.Items.Add(currentRuleSet.masterSpecialList[cbUnitSpecialType.SelectedIndex].name);
@@ -653,11 +888,16 @@ namespace LatexHammer
 
         private void btnUnitSpecialSave_Click(object sender, EventArgs e)
         {
+            saveUnitSpecial();
+        }
+
+        public void saveUnitSpecial()
+        {
             if (lbDetachment.SelectedIndex >= 0 & lbUnits.SelectedIndex >= 0 & lbUnitModels.SelectedIndex >= 0 & cbUnitSpecialType.SelectedIndex >= 0 & lbUnitSpecials.SelectedIndex >= 0)
             {
                 unitAspect newSpecial;
                 newSpecial.type = cbUnitSpecialType.SelectedIndex;
-                newSpecial.pts = int.Parse(txtUnitSpecialPts.Text);
+                newSpecial.pts = myParseInt(txtUnitSpecialPts.Text);
                 newSpecial.qty = 0;
 
                 lbUnitSpecials.Items[lbUnitSpecials.SelectedIndex] = currentRuleSet.masterSpecialList[cbUnitSpecialType.SelectedIndex].name;
@@ -669,8 +909,13 @@ namespace LatexHammer
 
         private void btnUnitSpecialRemove_Click(object sender, EventArgs e)
         {
+            removeUnitSpecial();
+        }
+
+        public void removeUnitSpecial()
+        {
             if (lbDetachment.SelectedIndex >= 0 & lbUnits.SelectedIndex >= 0 & lbUnitModels.SelectedIndex >= 0 & lbUnitSpecials.SelectedIndex >= 0)
-            {         
+            {
                 currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[lbUnits.SelectedIndex].listOfModels[lbUnitModels.SelectedIndex].listOfSpecials.RemoveAt(lbUnitSpecials.SelectedIndex);
                 lbUnitSpecials.Items.RemoveAt(lbUnitSpecials.SelectedIndex);
 
@@ -727,6 +972,8 @@ namespace LatexHammer
 
         private void sfdArmyList_FileOk(object sender, CancelEventArgs e)
         {
+            currentArmyList.name = txtArmyName.Text;
+            currentArmyList.author = txtAuthor.Text;
             string armyListString = Newtonsoft.Json.JsonConvert.SerializeObject(currentArmyList);
             using (System.IO.StreamWriter file =
            new System.IO.StreamWriter(sfdArmyList.FileName))
@@ -1147,6 +1394,301 @@ namespace LatexHammer
                
             
             return returnString;
+        }
+
+        //If we hit enter to like we would if we lost focus
+        private void cbUnitModelType_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                cbUnitModelType_SetDefaults();
+            }
+        }
+
+        private void cbUnitModelType_Leave(object sender, EventArgs e)
+        {
+            cbUnitModelType_SetDefaults();
+        }
+
+        private void cbUnitModelType_SetDefaults()
+        {
+            
+           if(currentRuleSet.masterModelKeyDictionary.ContainsKey(cbUnitModelType.SelectedItem.ToString()))
+            {
+                int modelIndex = currentRuleSet.masterModelKeyDictionary[cbUnitModelType.SelectedItem.ToString()];
+                txtUnitModelPts.Text = currentRuleSet.masterModelList[modelIndex].defaultPoints.ToString();
+                txtUnitModelQty.Text = currentRuleSet.masterModelList[modelIndex].defaultQuantity.ToString();
+
+                //lbUnitWargear.Items.Clear();
+                //lbUnitSpecials.Items.Clear();
+                //for (int index = 0; index < currentRuleSet.masterModelList[modelIndex].defaultWargear.Count; index ++)
+                //{
+                //    lbUnitWargear.Items.Add(currentRuleSet.masterModelList[modelIndex].defaultWargear[index]);
+                //}
+
+                //for (int index = 0; index < currentRuleSet.masterModelList[modelIndex].defaultSpecial.Count; index++)
+                //{
+                //    lbUnitSpecials.Items.Add(currentRuleSet.masterModelList[modelIndex].defaultSpecial[index]);
+                //}
+            }
+        }
+
+        private void btnAddModelDefaultWargear_Click(object sender, EventArgs e)
+        {
+            if((lbModels.SelectedIndex >= 0) & (currentRuleSet.masterWargearKeyDictionary.ContainsKey(cbModelDefaultWargearType.SelectedItem.ToString())) )
+            {
+                lbModelDefaultWargear.Items.Add(cbModelDefaultWargearType.SelectedItem.ToString());
+                currentRuleSet.masterModelList[lbModels.SelectedIndex].defaultWargear.Add(cbModelDefaultWargearType.SelectedItem.ToString());
+            }
+        }
+
+        private void btnRemoveModelDefaultWargear_Click(object sender, EventArgs e)
+        {
+            if ((lbModels.SelectedIndex >= 0) & (lbModelDefaultWargear.SelectedIndex >= 0))
+            {
+                currentRuleSet.masterModelList[lbModels.SelectedIndex].defaultWargear.Remove(lbModelDefaultWargear.SelectedItem.ToString());
+                lbModelDefaultWargear.Items.RemoveAt(lbModelDefaultWargear.SelectedIndex);
+            }
+        }
+
+        private void btnAddModelDefaultSpecial_Click(object sender, EventArgs e)
+        {
+            if ((lbModels.SelectedIndex >= 0) & (currentRuleSet.masterSpecialKeyDictionary.ContainsKey(cbModelDefaultSpecialType.SelectedItem.ToString())))
+            {
+                lbModelDefaultSpecials.Items.Add(cbModelDefaultSpecialType.SelectedItem.ToString());
+                currentRuleSet.masterModelList[lbModels.SelectedIndex].defaultSpecial.Add(cbModelDefaultSpecialType.SelectedItem.ToString());
+            }
+        }
+
+        private void cbUnitWargearType_Leave(object sender, EventArgs e)
+        {
+            cbUnitWargearType_SetDefaults();
+        }
+
+        private void cbUnitWargearType_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                cbUnitWargearType_SetDefaults();
+            }
+        }
+
+        private void cbUnitWargearType_SetDefaults()
+        {
+
+            if (currentRuleSet.masterWargearKeyDictionary.ContainsKey(cbUnitWargearType.SelectedItem.ToString()))
+            {
+                int WargearIndex = currentRuleSet.masterWargearKeyDictionary[cbUnitWargearType.SelectedItem.ToString()];
+                txtUnitWargearPts.Text = currentRuleSet.masterWargearList[WargearIndex].defaultPoints.ToString();
+                txtUnitWargearQty.Text = currentRuleSet.masterWargearList[WargearIndex].defaultQuantity.ToString();
+            }
+        }
+
+        private void cbUnitSpecialType_Leave(object sender, EventArgs e)
+        {
+            cbUnitSpecialType_SetDefaults();
+        }
+
+        private void cbUnitSpecialType_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                cbUnitSpecialType_SetDefaults();
+            }
+        }
+
+        private void cbUnitSpecialType_SetDefaults()
+        {
+
+            if (currentRuleSet.masterSpecialKeyDictionary.ContainsKey(cbUnitSpecialType.SelectedItem.ToString()))
+            {
+                int SpecialIndex = currentRuleSet.masterSpecialKeyDictionary[cbUnitSpecialType.SelectedItem.ToString()];
+                txtUnitSpecialPts.Text = currentRuleSet.masterSpecialList[SpecialIndex].defaultPoints.ToString();
+            }
+        }
+
+
+        private void txtModel_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                if ((lbModels.SelectedIndex >= 0) & (currentRuleSet.masterModelKeyDictionary.ContainsKey(txtModelName.Text)))
+                {
+                    saveModel();
+                }
+                else
+                {
+                    addModel();
+                }
+            }
+        }
+
+        private void txtWargear_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                if ((lbWargear.SelectedIndex >= 0) & (currentRuleSet.masterWargearKeyDictionary.ContainsKey(txtWargearName.Text)))
+                {
+                    saveWargear();
+                }
+                else
+                {
+                    addWargear();
+                }
+            }
+        }
+
+        private void txtSpecialRule_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                if ((lbSpecialRules.SelectedIndex >= 0) & (currentRuleSet.masterSpecialKeyDictionary.ContainsKey(txtSpecialRuleName.Text)))
+                {
+                    saveSpecial();
+                }
+                else
+                {
+                    addSpecial();
+                }
+            }
+        }
+
+        private void txtUnitModel_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                if ((lbUnitModels.SelectedIndex >= 0) )
+                {
+                    saveUnitModel();
+                }
+                else
+                {
+                    addUnitModel();
+                }
+            }
+        }
+
+        private void txtUnitWargear_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                if ((lbUnitWargear.SelectedIndex >= 0))
+                {
+                    saveUnitWargear();
+                }
+                else
+                {
+                    addUnitWargear();
+                }
+            }
+        }
+
+        private void txtUnitSpecialPts_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                if ((lbUnitSpecials.SelectedIndex >= 0) )
+                {
+                    saveUnitSpecial();
+                }
+                else
+                {
+                    addUnitSpecial();
+                }
+            }
+        }
+
+        private void txtUnitName_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                if ((lbUnits.SelectedIndex >= 0))
+                {
+                    saveUnit();
+                }
+                else
+                {
+                    addUnit();
+                }
+            }
+        }
+
+        private void txtDetachmentName_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                if ((lbDetachment.SelectedIndex >= 0) & (currentRuleSet.masterModelKeyDictionary.ContainsKey(txtModelName.Text)))
+                {
+                    saveDetachment();
+                }
+                else
+                {
+                    addDetachment();
+                }
+            }
+        }
+
+        private void btnAddDetachmentSpecial_Click(object sender, EventArgs e)
+        {
+            if (lbDetachment.SelectedIndex >= 0)
+            {
+                currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfSpecials.Add(cbDetachmentSpecials.SelectedItem.ToString());
+                lbDetachmentSpecials.Items.Add(cbDetachmentSpecials.SelectedItem.ToString());
+            }
+        }
+
+        private void btnRemoveDetachmentSpecial_Click(object sender, EventArgs e)
+        {
+            if ((lbDetachment.SelectedIndex >= 0) & (lbDetachmentSpecials.SelectedIndex >= 0))
+            {
+                currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfSpecials.RemoveAt(lbDetachmentSpecials.SelectedIndex);
+                lbDetachmentSpecials.Items.RemoveAt(lbDetachmentSpecials.SelectedIndex);
+            }
+        }
+
+        private void btnUnitCopy_Click(object sender, EventArgs e)
+        {
+            if ((lbDetachment.SelectedIndex >=0) & (lbUnits.SelectedIndex >= 0))
+            {
+                unit copyUnit;
+                copyUnit.name = currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[lbUnits.SelectedIndex].name;
+                copyUnit.role = currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[lbUnits.SelectedIndex].role;
+                copyUnit.listOfModels = new List<modelAspect> { };
+                for(int index = 0; index < currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[lbUnits.SelectedIndex].listOfModels.Count; index ++)
+                {
+                    modelAspect newUnitModel;
+                    newUnitModel.type = currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[lbUnits.SelectedIndex].listOfModels[index].type;
+                    newUnitModel.qty = currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[lbUnits.SelectedIndex].listOfModels[index].qty;
+                    newUnitModel.pts = currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[lbUnits.SelectedIndex].listOfModels[index].pts;
+
+                    newUnitModel.listOfWargear = new List<unitAspect> { };
+                    for(int wargearIndex = 0; wargearIndex < currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[lbUnits.SelectedIndex].listOfModels[index].listOfWargear.Count; wargearIndex++)
+                    {
+                        unitAspect newWargear;
+                        newWargear.type = currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[lbUnits.SelectedIndex].listOfModels[index].listOfWargear[wargearIndex].type;
+                        newWargear.qty = currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[lbUnits.SelectedIndex].listOfModels[index].listOfWargear[wargearIndex].qty;
+                        newWargear.pts = currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[lbUnits.SelectedIndex].listOfModels[index].listOfWargear[wargearIndex].pts;
+                        newUnitModel.listOfWargear.Add(newWargear);
+                    }
+
+                    newUnitModel.listOfSpecials = new List<unitAspect> { };
+                    for (int SpecialIndex = 0; SpecialIndex < currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[lbUnits.SelectedIndex].listOfModels[index].listOfSpecials.Count; SpecialIndex++)
+                    {
+                        unitAspect newSpecial;
+                        newSpecial.type = currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[lbUnits.SelectedIndex].listOfModels[index].listOfSpecials[SpecialIndex].type;                    
+                        newSpecial.pts = currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[lbUnits.SelectedIndex].listOfModels[index].listOfSpecials[SpecialIndex].pts;
+                        newSpecial.qty = 0;
+                        newUnitModel.listOfSpecials.Add(newSpecial);
+                    }
+
+                    copyUnit.listOfModels.Add(newUnitModel);
+                }
+
+                currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits.Add(copyUnit);
+                lbUnits.Items.Add(copyUnit.name);
+            }
+
+           
         }
     }
 }
