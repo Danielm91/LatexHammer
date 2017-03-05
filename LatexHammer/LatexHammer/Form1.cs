@@ -489,7 +489,7 @@ namespace LatexHammer
 
             for(int index = 0; index < currentArmyList.listOfDetachments.Count; index ++)
             {
-                lbDetachment.Items.Add(currentArmyList.listOfDetachments[index].name);
+                lbDetachment.Items.Add(currentArmyList.listOfDetachments[index].name + " [" + calcDetachmentPoints(currentArmyList.listOfDetachments[index]) + "]");
             }
         }
         private void btnDetachmentAdd_Click(object sender, EventArgs e)
@@ -506,7 +506,7 @@ namespace LatexHammer
             newDetachment.listOfSpecials = new List<string> { };
 
             currentArmyList.listOfDetachments.Add(newDetachment);
-            lbDetachment.Items.Add(newDetachment.name);
+            lbDetachment.Items.Add(newDetachment.name + " [0]");
             lbDetachment.SelectedIndex = lbDetachment.Items.Count - 1;
         }
 
@@ -555,7 +555,7 @@ namespace LatexHammer
 
                 for (int index = 0; index < currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits.Count; index ++)
                 {
-                    lbUnits.Items.Add(currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[index].name);
+                    lbUnits.Items.Add(currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[index].name + " [" + calcUnitPoints(currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[index] ).ToString() + "]");
                 }
 
                 for (int index = 0; index < currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfSpecials.Count; index++)
@@ -605,8 +605,15 @@ namespace LatexHammer
 
         public void updatePointDisplayOnUnitChange()
         {
-            txtUnitPoints.Text = calcUnitPoints(currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[lbUnits.SelectedIndex]).ToString();
-            txtDetachmentPoints.Text = calcDetachmentPoints(currentArmyList.listOfDetachments[lbDetachment.SelectedIndex]).ToString();
+            int unitPoints = calcUnitPoints(currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[lbUnits.SelectedIndex]);
+            int detatchmentPoints = calcDetachmentPoints(currentArmyList.listOfDetachments[lbDetachment.SelectedIndex]);
+
+            lbUnits.Items[lbUnits.SelectedIndex] = currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].listOfUnits[lbUnits.SelectedIndex].name + " [" + unitPoints.ToString() + "]";
+            txtUnitPoints.Text = unitPoints.ToString();
+
+            lbDetachment.Items[lbDetachment.SelectedIndex] = currentArmyList.listOfDetachments[lbDetachment.SelectedIndex].name + " [" + detatchmentPoints.ToString() + "]";
+            txtDetachmentPoints.Text = detatchmentPoints.ToString();
+
             txtArmyPoints.Text = calcArmyListPoints(currentArmyList).ToString();
         }
 
@@ -1008,10 +1015,10 @@ namespace LatexHammer
         private void sfdGenerateTex_FileOk(object sender, CancelEventArgs e)
         {
             using (System.IO.StreamWriter file =
-          new System.IO.StreamWriter(sfdGenerateTex.FileName))
+          new System.IO.StreamWriter(sfdGenerateTex.FileName + ".tex"))
             {
                 file.WriteLine("\\documentclass[11pt]{article} % use larger type, default would be 10pt");
- 
+
                 file.WriteLine("");
                 file.WriteLine("\\usepackage[utf8]{inputenc} % set input encoding (not needed with XeLaTeX)");
 
@@ -1085,7 +1092,7 @@ namespace LatexHammer
                     firstUnitFound = false;
                     for (int indexUnit = 0; indexUnit < currentArmyList.listOfDetachments[indexDetachment].listOfUnits.Count; indexUnit++)
                     {
-                       
+
 
                         if (currentArmyList.listOfDetachments[indexDetachment].listOfUnits[indexUnit].role == UNIT_ROLE_HQ)
                         {
@@ -1098,7 +1105,7 @@ namespace LatexHammer
 
                             file.WriteLine(writeUnitStats(indexDetachment, indexUnit));
                         }
-                        
+
                     }
 
                     firstUnitFound = false;
@@ -1119,17 +1126,17 @@ namespace LatexHammer
 
                     }
 
-                firstUnitFound = false;
-                for (int indexUnit = 0; indexUnit < currentArmyList.listOfDetachments[indexDetachment].listOfUnits.Count; indexUnit++)
+                    firstUnitFound = false;
+                    for (int indexUnit = 0; indexUnit < currentArmyList.listOfDetachments[indexDetachment].listOfUnits.Count; indexUnit++)
                     {
                         if (currentArmyList.listOfDetachments[indexDetachment].listOfUnits[indexUnit].role == UNIT_ROLE_TROOPS)
                         {
-                        if (firstUnitFound == false)
-                        {
-                            firstUnitFound = true;
-                            file.WriteLine("");
-                            file.WriteLine("\\subsection{Troops}");
-                        }
+                            if (firstUnitFound == false)
+                            {
+                                firstUnitFound = true;
+                                file.WriteLine("");
+                                file.WriteLine("\\subsection{Troops}");
+                            }
 
                             file.WriteLine(writeUnitStats(indexDetachment, indexUnit));
                         }
@@ -1200,12 +1207,33 @@ namespace LatexHammer
 
                     }
                 }
-                                          
-                file.WriteLine("");        
+
+                file.WriteLine("");
                 file.WriteLine("\\end{flushleft}");
                 file.WriteLine("\\end{document}");
 
             }
+
+            string args =  "-output-directory " + "\" C:\\Users\\Daniel\\Documents\\LatexHammerLists\"" + " \" " + sfdGenerateTex.FileName + ".tex\"" ;
+
+            System.Diagnostics.Process p1 = new System.Diagnostics.Process();
+            p1.StartInfo.FileName = "pdflatex";
+            p1.StartInfo.Arguments = args;
+            p1.StartInfo.UseShellExecute = false;
+
+            p1.Start();
+            p1.WaitForExit();
+
+           
+
+            p1.StartInfo.FileName = "\"C:\\Program Files (x86)\\Adobe\\Acrobat Reader DC\\Reader\\AcroRd32.exe\"";
+            p1.StartInfo.Arguments = "\"" + Directory.GetCurrentDirectory() + "\\Tau_Test.pdf\"" + " \"";//"\"" + sfdGenerateTex.FileName + ".pdf\"";
+            p1.StartInfo.UseShellExecute = false;
+
+            p1.Start();
+
+            //System.Diagnostics.Process.Start(processCommand); //+ Environment.NewLine + "\"C:\\Program Files (x86)\\Adobe\\Acrobat Reader DC\\Reader\\AcroRd32.exe\" " + sfdGenerateTex.FileName + ".pdf");
+
         }
 
         public string writeUnitStats(int indexDetachment, int indexUnit)
